@@ -1,0 +1,528 @@
+/* ========================================
+   RESET E VARIÁVEIS
+   ======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1e40af;
+    --secondary: #64748b;
+    --success: #10b981;
+    --error: #ef4444;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ========================================
+   CONTAINER E LAYOUT
+   ======================================== */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* ========================================
+   NAVEGAÇÃO (TABS PRINCIPAIS)
+   ======================================== */
+.tab-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.tab-nav-btn {
+    flex: 1;
+    min-width: 150px;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-nav-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.tab-nav-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* ========================================
+   SEÇÕES
+   ======================================== */
+.section {
+    display: none;
+    background: var(--card-bg);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section h2 {
+    font-size: 1.875rem;
+    margin-bottom: 0.75rem;
+    color: var(--primary);
+}
+
+.section-description {
+    color: var(--text-light);
+    margin-bottom: 2rem;
+    font-size: 1.05rem;
+}
+
+/* ========================================
+   FORM GROUPS
+   ======================================== */
+.form-group {
+    margin-bottom: 1.75rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+}
+
+/* ========================================
+   TABS SECUNDÁRIAS (TEXTO/ARQUIVO)
+   ======================================== */
+.tab-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--secondary);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+.tab-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ========================================
+   INPUTS
+   ======================================== */
+.text-input,
+.input-textarea,
+.key-textarea,
+.file-input {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 0.95rem;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+
+.text-input:focus,
+.input-textarea:focus,
+.key-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.input-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.key-textarea {
+    min-height: 200px;
+    resize: vertical;
+}
+
+.file-input {
+    padding: 0.75rem;
+    cursor: pointer;
+}
+
+.file-input::-webkit-file-upload-button {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-input::-webkit-file-upload-button:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* ========================================
+   RADIO BUTTONS
+   ======================================== */
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.radio-label input[type="radio"] {
+    margin-right: 0.5rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+.btn {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: var(--shadow);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    background: var(--secondary);
+    color: white;
+}
+
+.btn-small:hover {
+    background: var(--text);
+}
+
+/* ========================================
+   RESULT CONTAINERS
+   ======================================== */
+.result-container {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border);
+}
+
+.result-box {
+    background: var(--bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.result-header h3 {
+    font-size: 1.125rem;
+    color: var(--text);
+}
+
+.output-box {
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+    word-break: break-all;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+    color: var(--text);
+}
+
+.key-output {
+    margin-bottom: 1.5rem;
+}
+
+.key-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.key-header h3 {
+    font-size: 1.125rem;
+    color: var(--text);
+}
+
+/* ========================================
+   MESSAGES
+   ======================================== */
+.message {
+    padding: 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.125rem;
+    text-align: center;
+}
+
+.message-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 2px solid var(--success);
+}
+
+.message-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 2px solid var(--error);
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+.footer {
+    text-align: center;
+    padding: 2rem;
+    margin-top: 3rem;
+    color: var(--text-light);
+    border-top: 2px solid var(--border);
+}
+
+.footer p {
+    margin: 0.25rem 0;
+}
+
+.footer-info {
+    font-size: 0.875rem;
+}
+
+/* ========================================
+   SCROLLBAR CUSTOMIZATION
+   ======================================== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .header p {
+        font-size: 0.95rem;
+    }
+    
+    .section {
+        padding: 1.5rem;
+    }
+    
+    .tab-nav {
+        flex-direction: column;
+    }
+    
+    .tab-nav-btn {
+        min-width: 100%;
+    }
+    
+    .config-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .result-header,
+    .key-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+    
+    .btn-small {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .radio-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .tab-buttons {
+        flex-direction: column;
+    }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.text-center {
+    text-align: center;
+}
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }

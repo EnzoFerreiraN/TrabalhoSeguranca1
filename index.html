@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envelope Digital - Sistema de Criptografia</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Indicador de Carregamento -->
+    <div id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="text-align: center;">
+            <h2 style="color: #2563eb; margin-bottom: 1rem;">🔐 Envelope Digital</h2>
+            <div style="width: 60px; height: 60px; border: 5px solid #e2e8f0; border-top: 5px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+            <p style="color: #64748b; font-size: 1rem;">Carregando biblioteca de criptografia...</p>
+            <p id="loadingSource" style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Tentando CDN 1 de 5...</p>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🔐 Envelope Digital</h1>
+            <p>Sistema de Criptografia AES e Assinatura Digital RSA</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-nav-btn active" onclick="mostrarSecao('secaoChaves')">
+                🔑 Gerar Chaves RSA
+            </button>
+            <button class="tab-nav-btn" onclick="mostrarSecao('secaoAES')">
+                🔒 Cifrar AES
+            </button>
+            <button class="tab-nav-btn" onclick="mostrarSecao('secaoAESDec')">
+                🔓 Decifrar AES
+            </button>
+            <button class="tab-nav-btn" onclick="mostrarSecao('secaoAssinar')">
+                ✍️ Assinar RSA
+            </button>
+            <button class="tab-nav-btn" onclick="mostrarSecao('secaoVerificar')">
+                ✅ Verificar Assinatura
+            </button>
+        </nav>
+
+        <!-- Seção 1: Geração de Chaves RSA -->
+        <section id="secaoChaves" class="section active">
+            <h2>Geração de Chaves RSA</h2>
+            <p class="section-description">Gere um par de chaves RSA (pública e privada) compatível com OpenSSL</p>
+            
+            <div class="form-group">
+                <label>Tamanho da Chave:</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="keySize" id="keySize1024" value="1024">
+                        1024 bits
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="keySize" id="keySize2048" value="2048" checked>
+                        2048 bits
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="gerarChavesRSA()">
+                Gerar Par de Chaves
+            </button>
+
+            <div class="result-container">
+                <div class="key-output">
+                    <div class="key-header">
+                        <h3>Chave Pública</h3>
+                        <button class="btn btn-small" onclick="baixarChavePublica()">
+                            💾 Baixar .pem
+                        </button>
+                    </div>
+                    <textarea id="publicKey" class="key-textarea" readonly placeholder="A chave pública aparecerá aqui..."></textarea>
+                </div>
+
+                <div class="key-output">
+                    <div class="key-header">
+                        <h3>Chave Privada</h3>
+                        <button class="btn btn-small" onclick="baixarChavePrivada()">
+                            💾 Baixar .pem
+                        </button>
+                    </div>
+                    <textarea id="privateKey" class="key-textarea" readonly placeholder="A chave privada aparecerá aqui..."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 2: Cifragem AES -->
+        <section id="secaoAES" class="section">
+            <h2>Cifragem AES</h2>
+            <p class="section-description">Cifre mensagens usando o algoritmo AES com chave simétrica</p>
+
+            <!-- Entrada de Dados -->
+            <div class="form-group">
+                <label>Entrada:</label>
+                <div class="tab-buttons">
+                    <button id="tabAesText" class="tab-btn active" onclick="alternarAbaAes('Text')">
+                        Texto
+                    </button>
+                    <button id="tabAesFile" class="tab-btn" onclick="alternarAbaAes('File')">
+                        Arquivo
+                    </button>
+                </div>
+                
+                <div id="contentAesText" class="tab-content active">
+                    <textarea id="aesTextInput" class="input-textarea" placeholder="Digite o texto para cifrar..."></textarea>
+                </div>
+                
+                <div id="contentAesFile" class="tab-content">
+                    <input type="file" id="aesFileInput" class="file-input">
+                </div>
+            </div>
+
+            <!-- Configurações AES -->
+            <div class="config-grid">
+                <div class="form-group">
+                    <label>Tamanho da Chave:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="aesKeySize" value="128" checked>
+                            128 bits
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesKeySize" value="192">
+                            192 bits
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesKeySize" value="256">
+                            256 bits
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Modo de Operação:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="aesMode" value="ECB" checked>
+                            ECB
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesMode" value="CBC">
+                            CBC
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Formato da Chave:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="aesKeyFormat" value="UTF8" checked>
+                            UTF-8
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesKeyFormat" value="HEX">
+                            HEX
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Formato de Saída:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="aesOutputFormat" value="BASE64" checked>
+                            Base64
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesOutputFormat" value="HEX">
+                            HEX
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chave AES (Opcional) -->
+            <div class="form-group">
+                <label>Chave AES (deixe vazio para gerar automaticamente):</label>
+                <input type="text" id="aesKeyInputCifrar" class="text-input" placeholder="Opcional - será gerada se vazio">
+            </div>
+
+            <!-- IV (apenas para CBC) -->
+            <div id="aesIvInputContainer" class="form-group" style="display: none;">
+                <label>Vetor de Inicialização (IV) - deixe vazio para gerar automaticamente:</label>
+                <input type="text" id="aesIvInputCifrar" class="text-input" placeholder="Opcional - será gerado se vazio">
+            </div>
+
+            <button class="btn btn-primary" onclick="criptografarAES()">
+                🔒 Cifrar
+            </button>
+
+            <!-- Resultados -->
+            <div id="aesResultContainer" class="result-container" style="display: none;">
+                <div class="result-box">
+                    <div class="result-header">
+                        <h3>Chave AES</h3>
+                        <button class="btn btn-small" onclick="baixarAesOutput('aesKeyOutput', 'chave_aes.txt')">
+                            💾 Baixar
+                        </button>
+                    </div>
+                    <div id="aesKeyOutput" class="output-box"></div>
+                </div>
+
+                <div id="aesIvContainer" class="result-box" style="display: none;">
+                    <div class="result-header">
+                        <h3>IV (Vetor de Inicialização)</h3>
+                        <button class="btn btn-small" onclick="baixarAesOutput('aesIvOutput', 'iv_aes.txt')">
+                            💾 Baixar
+                        </button>
+                    </div>
+                    <div id="aesIvOutput" class="output-box"></div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-header">
+                        <h3>Texto Cifrado</h3>
+                        <button class="btn btn-small" onclick="baixarAesOutput('aesCipherOutput', 'texto_cifrado_aes.txt')">
+                            💾 Baixar
+                        </button>
+                    </div>
+                    <div id="aesCipherOutput" class="output-box"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 3: Decifragem AES -->
+        <section id="secaoAESDec" class="section">
+            <h2>Decifragem AES</h2>
+            <p class="section-description">Decifre mensagens cifradas com AES</p>
+
+            <!-- Entrada de Dados Cifrados -->
+            <div class="form-group">
+                <label>Texto Cifrado:</label>
+                <div class="tab-buttons">
+                    <button id="tabAesDecText" class="tab-btn active" onclick="alternarAbaAesDec('Text')">
+                        Texto
+                    </button>
+                    <button id="tabAesDecFile" class="tab-btn" onclick="alternarAbaAesDec('File')">
+                        Arquivo
+                    </button>
+                </div>
+                
+                <div id="contentAesDecText" class="tab-content active">
+                    <textarea id="aesDecTextInput" class="input-textarea" placeholder="Cole o texto cifrado..."></textarea>
+                </div>
+                
+                <div id="contentAesDecFile" class="tab-content">
+                    <input type="file" id="aesDecFileInput" class="file-input">
+                </div>
+            </div>
+
+            <!-- Configurações AES Decifragem -->
+            <div class="config-grid">
+                <div class="form-group">
+                    <label>Tamanho da Chave:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecKeySize" value="128" checked>
+                            128 bits
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecKeySize" value="192">
+                            192 bits
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecKeySize" value="256">
+                            256 bits
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Modo de Operação:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecMode" value="ECB" checked>
+                            ECB
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecMode" value="CBC">
+                            CBC
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Formato da Chave:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecKeyFormat" value="UTF8" checked>
+                            UTF-8
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecKeyFormat" value="HEX">
+                            HEX
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Formato de Entrada:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecInputFormat" value="BASE64" checked>
+                            Base64
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="aesDecInputFormat" value="HEX">
+                            HEX
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chave AES (Obrigatória) -->
+            <div class="form-group">
+                <label>Chave AES:</label>
+                <input type="text" id="aesKeyInput" class="text-input" placeholder="Cole a chave AES aqui..." required>
+            </div>
+
+            <!-- IV (apenas para CBC) -->
+            <div id="aesDecIvContainer" class="form-group" style="display: none;">
+                <label>Vetor de Inicialização (IV):</label>
+                <input type="text" id="aesIvInput" class="text-input" placeholder="Cole o IV aqui..." required>
+            </div>
+
+            <button class="btn btn-primary" onclick="descriptografarAES()">
+                🔓 Decifrar
+            </button>
+
+            <!-- Resultado -->
+            <div id="aesDecResultContainer" class="result-container" style="display: none;">
+                <div class="result-box">
+                    <div class="result-header">
+                        <h3>Texto Decifrado</h3>
+                        <button class="btn btn-small" onclick="baixarAesDecrypted()">
+                            💾 Baixar
+                        </button>
+                    </div>
+                    <div id="aesDecOutput" class="output-box"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 4: Assinatura RSA -->
+        <section id="secaoAssinar" class="section">
+            <h2>Assinatura Digital RSA</h2>
+            <p class="section-description">Crie uma assinatura digital usando sua chave privada RSA</p>
+
+            <!-- Chave Privada -->
+            <div class="form-group">
+                <label>Chave Privada:</label>
+                <div class="tab-buttons">
+                    <button id="tabSignKeyText" class="tab-btn active" onclick="alternarAbaAssinatura('Key', 'Text')">
+                        Texto
+                    </button>
+                    <button id="tabSignKeyFile" class="tab-btn" onclick="alternarAbaAssinatura('Key', 'File')">
+                        Arquivo .pem
+                    </button>
+                </div>
+                
+                <div id="contentSignKeyText" class="tab-content active">
+                    <textarea id="signKeyText" class="input-textarea" placeholder="Cole a chave privada aqui..."></textarea>
+                </div>
+                
+                <div id="contentSignKeyFile" class="tab-content">
+                    <input type="file" id="signKeyFile" class="file-input" accept=".pem">
+                </div>
+            </div>
+
+            <!-- Conteúdo para Assinar -->
+            <div class="form-group">
+                <label>Conteúdo para Assinar:</label>
+                <div class="tab-buttons">
+                    <button id="tabSignContentText" class="tab-btn active" onclick="alternarAbaAssinatura('Content', 'Text')">
+                        Texto
+                    </button>
+                    <button id="tabSignContentFile" class="tab-btn" onclick="alternarAbaAssinatura('Content', 'File')">
+                        Arquivo
+                    </button>
+                </div>
+                
+                <div id="contentSignContentText" class="tab-content active">
+                    <textarea id="signContentText" class="input-textarea" placeholder="Digite o conteúdo para assinar..."></textarea>
+                </div>
+                
+                <div id="contentSignContentFile" class="tab-content">
+                    <input type="file" id="signContentFile" class="file-input">
+                </div>
+            </div>
+
+            <!-- Configurações -->
+            <div class="config-grid">
+                <div class="form-group">
+                    <label>Versão do SHA-2:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="shaVersion" value="256" checked>
+                            SHA-256
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="shaVersion" value="384">
+                            SHA-384
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="shaVersion" value="512">
+                            SHA-512
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Formato de Saída:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="signOutputFormat" value="BASE64" checked>
+                            Base64
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="signOutputFormat" value="HEX">
+                            HEX
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="assinarMensagem()">
+                ✍️ Criar Assinatura
+            </button>
+
+            <!-- Resultado -->
+            <div class="result-container">
+                <div class="result-box">
+                    <div class="result-header">
+                        <h3>Assinatura Digital</h3>
+                        <button class="btn btn-small" onclick="baixarAssinatura()">
+                            💾 Baixar
+                        </button>
+                    </div>
+                    <div id="signatureOutput" class="output-box"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 5: Verificação de Assinatura RSA -->
+        <section id="secaoVerificar" class="section">
+            <h2>Verificação de Assinatura RSA</h2>
+            <p class="section-description">Verifique a autenticidade de uma assinatura digital usando a chave pública</p>
+
+            <!-- Chave Pública -->
+            <div class="form-group">
+                <label>Chave Pública:</label>
+                <div class="tab-buttons">
+                    <button id="tabVerifyKeyText" class="tab-btn active" onclick="alternarAbaVerificacao('Key', 'Text')">
+                        Texto
+                    </button>
+                    <button id="tabVerifyKeyFile" class="tab-btn" onclick="alternarAbaVerificacao('Key', 'File')">
+                        Arquivo .pem
+                    </button>
+                </div>
+                
+                <div id="contentVerifyKeyText" class="tab-content active">
+                    <textarea id="verifyKeyText" class="input-textarea" placeholder="Cole a chave pública aqui..."></textarea>
+                </div>
+                
+                <div id="contentVerifyKeyFile" class="tab-content">
+                    <input type="file" id="verifyKeyFile" class="file-input" accept=".pem">
+                </div>
+            </div>
+
+            <!-- Conteúdo Original -->
+            <div class="form-group">
+                <label>Conteúdo Original:</label>
+                <div class="tab-buttons">
+                    <button id="tabVerifyContentText" class="tab-btn active" onclick="alternarAbaVerificacao('Content', 'Text')">
+                        Texto
+                    </button>
+                    <button id="tabVerifyContentFile" class="tab-btn" onclick="alternarAbaVerificacao('Content', 'File')">
+                        Arquivo
+                    </button>
+                </div>
+                
+                <div id="contentVerifyContentText" class="tab-content active">
+                    <textarea id="verifyContentText" class="input-textarea" placeholder="Digite o conteúdo original..."></textarea>
+                </div>
+                
+                <div id="contentVerifyContentFile" class="tab-content">
+                    <input type="file" id="verifyContentFile" class="file-input">
+                </div>
+            </div>
+
+            <!-- Assinatura -->
+            <div class="form-group">
+                <label>Assinatura:</label>
+                <textarea id="signatureInput" class="input-textarea" placeholder="Cole a assinatura aqui..."></textarea>
+            </div>
+
+            <!-- Configurações -->
+            <div class="config-grid">
+                <div class="form-group">
+                    <label>Versão do SHA-2:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="verifyShaVersion" value="256" checked>
+                            SHA-256
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="verifyShaVersion" value="384">
+                            SHA-384
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="verifyShaVersion" value="512">
+                            SHA-512
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Formato da Assinatura:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="verifyInputFormat" value="BASE64" checked>
+                            Base64
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="verifyInputFormat" value="HEX">
+                            HEX
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="verificarAssinatura()">
+                ✅ Verificar Assinatura
+            </button>
+
+            <!-- Resultado -->
+            <div id="verifyResultContainer" class="result-container" style="display: none;">
+                <div id="verifyResult" class="message"></div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>🔐 Sistema de Criptografia - Envelope Digital</p>
+            <p class="footer-info">Compatível com OpenSSL e CyberChef</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Biblioteca de Criptografia com Fallbacks -->
+    <script>
+        // Sistema de fallback para carregar node-forge de múltiplas fontes
+        (function() {
+            const forgeSources = [
+                'https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js',
+                'https://unpkg.com/node-forge@1.3.1/dist/forge.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/node-forge/1.3.1/forge.min.js',
+                'https://cdn.skypack.dev/node-forge@1.3.1',
+                './forge.min.js'  // Fallback local
+            ];
+            
+            let currentIndex = 0;
+            
+            function updateLoadingMessage() {
+                const loadingSource = document.getElementById('loadingSource');
+                if (loadingSource) {
+                    const sourceNames = ['jsDelivr CDN', 'unpkg CDN', 'Cloudflare CDN', 'Skypack CDN', 'Arquivo Local'];
+                    loadingSource.textContent = `Tentando: ${sourceNames[currentIndex]} (${currentIndex + 1} de ${forgeSources.length})`;
+                }
+            }
+            
+            function hideLoading() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    overlay.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => overlay.remove(), 300);
+                }
+            }
+            
+            function loadForge() {
+                if (currentIndex >= forgeSources.length) {
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay) {
+                        overlay.innerHTML = `
+                            <div style="text-align: center; max-width: 500px; padding: 2rem;">
+                                <h2 style="color: #ef4444; margin-bottom: 1rem;">❌ Erro Crítico</h2>
+                                <p style="color: #64748b; margin-bottom: 1.5rem;">Não foi possível carregar a biblioteca de criptografia de nenhuma fonte.</p>
+                                <div style="background: #fee2e2; padding: 1rem; border-radius: 8px; text-align: left; margin-bottom: 1rem;">
+                                    <strong style="color: #991b1b;">Possíveis soluções:</strong>
+                                    <ol style="color: #991b1b; margin-top: 0.5rem; padding-left: 1.5rem;">
+                                        <li>Verifique sua conexão com a internet</li>
+                                        <li>Desative bloqueadores de anúncios temporariamente</li>
+                                        <li>Tente outro navegador (Chrome, Firefox, Edge)</li>
+                                        <li>Verifique configurações de firewall/proxy</li>
+                                    </ol>
+                                </div>
+                                <button onclick="location.reload()" style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                    🔄 Tentar Novamente
+                                </button>
+                            </div>
+                        `;
+                    }
+                    console.error('❌ Não foi possível carregar a biblioteca de criptografia de nenhuma fonte.');
+                    return;
+                }
+                
+                updateLoadingMessage();
+                
+                const script = document.createElement('script');
+                script.src = forgeSources[currentIndex];
+                script.async = false;
+                
+                script.onload = function() {
+                    console.log('✅ Biblioteca node-forge carregada com sucesso de:', forgeSources[currentIndex]);
+                    hideLoading();
+                    // Carregar os módulos da aplicação
+                    loadAppModules();
+                };
+                
+                script.onerror = function() {
+                    console.warn('⚠️ Falha ao carregar de:', forgeSources[currentIndex]);
+                    currentIndex++;
+                    setTimeout(loadForge, 500); // Pequeno delay antes de tentar próxima fonte
+                };
+                
+                document.head.appendChild(script);
+            }
+            
+            function loadAppModules() {
+                const modules = [
+                    'utils.js',
+                    'rsa-keys.js',
+                    'aes-crypto.js',
+                    'rsa-signature.js',
+                    'main.js',
+                    'script.js'
+                ];
+                
+                modules.forEach(function(module) {
+                    const script = document.createElement('script');
+                    script.src = module;
+                    script.async = false;
+                    document.body.appendChild(script);
+                });
+            }
+            
+            // Iniciar carregamento
+            loadForge();
+        })();
+    </script>
+</body>
+</html>
