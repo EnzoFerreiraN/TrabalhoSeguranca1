@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Envelope Digital - Sistema de Criptografia</title>
+    <title>Trabalho de Segurança - Sistema de Criptografia</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- Indicador de Carregamento -->
     <div id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <div style="text-align: center;">
-            <h2 style="color: #2563eb; margin-bottom: 1rem;">🔐 Envelope Digital</h2>
+            <h2 style="color: #2563eb; margin-bottom: 1rem;">🔐 Trabalho de Segurança</h2>
             <div style="width: 60px; height: 60px; border: 5px solid #e2e8f0; border-top: 5px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
             <p style="color: #64748b; font-size: 1rem;">Carregando biblioteca de criptografia...</p>
             <p id="loadingSource" style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Tentando CDN 1 de 5...</p>
@@ -27,7 +27,7 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1>🔐 Envelope Digital</h1>
+            <h1>🔐 Trabalho de Segurança</h1>
             <p>Sistema de Criptografia AES e Assinatura Digital RSA</p>
         </header>
 
@@ -157,20 +157,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Formato da Chave:</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="aesKeyFormat" value="UTF8" checked>
-                            UTF-8
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="aesKeyFormat" value="HEX">
-                            HEX
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
                     <label>Formato de Saída:</label>
                     <div class="radio-group">
                         <label class="radio-label">
@@ -183,18 +169,12 @@
                         </label>
                     </div>
                 </div>
-            </div>
-
-            <!-- Chave AES (Opcional) -->
-            <div class="form-group">
-                <label>Chave AES (deixe vazio para gerar automaticamente):</label>
-                <input type="text" id="aesKeyInputCifrar" class="text-input" placeholder="Opcional - será gerada se vazio">
-            </div>
-
-            <!-- IV (apenas para CBC) -->
-            <div id="aesIvInputContainer" class="form-group" style="display: none;">
-                <label>Vetor de Inicialização (IV) - deixe vazio para gerar automaticamente:</label>
-                <input type="text" id="aesIvInputCifrar" class="text-input" placeholder="Opcional - será gerado se vazio">
+                
+                <div class="info-box" style="background: #e3f2fd; padding: 1rem; border-left: 4px solid #2196f3; border-radius: 4px; margin-top: 1rem;">
+                    <strong>ℹ️ Geração Automática:</strong><br>
+                    A chave AES e o IV serão gerados automaticamente de forma segura.<br>
+                    Você receberá a chave e o IV após a cifragem.
+                </div>
             </div>
 
             <button class="btn btn-primary" onclick="criptografarAES()">
@@ -285,32 +265,18 @@
                     <label>Modo de Operação:</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="aesDecMode" value="ECB" checked>
+                            <input type="radio" name="aesDecMode" value="ECB">
                             ECB
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="aesDecMode" value="CBC">
+                            <input type="radio" name="aesDecMode" value="CBC" checked>
                             CBC
                         </label>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Formato da Chave:</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="aesDecKeyFormat" value="UTF8" checked>
-                            UTF-8
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="aesDecKeyFormat" value="HEX">
-                            HEX
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Formato de Entrada:</label>
+                    <label>Formato de Entrada (Chave/IV/Texto Cifrado):</label>
                     <div class="radio-group">
                         <label class="radio-label">
                             <input type="radio" name="aesDecInputFormat" value="BASE64" checked>
@@ -321,6 +287,9 @@
                             HEX
                         </label>
                     </div>
+                    <small style="color: #666; display: block; margin-top: 0.5rem;">
+                        💡 Selecione o mesmo formato usado na cifragem
+                    </small>
                 </div>
             </div>
 
@@ -331,10 +300,50 @@
             </div>
 
             <!-- IV (apenas para CBC) -->
-            <div id="aesDecIvContainer" class="form-group" style="display: none;">
+            <div id="aesDecIvContainer" class="form-group">
                 <label>Vetor de Inicialização (IV):</label>
                 <input type="text" id="aesIvInput" class="text-input" placeholder="Cole o IV aqui..." required>
             </div>
+            
+            <script>
+                // Script inline para garantir que o IV seja controlado corretamente
+                (function() {
+                    function configurarIVDecifragem() {
+                        const radios = document.querySelectorAll('input[name="aesDecMode"]');
+                        const ivContainer = document.getElementById('aesDecIvContainer');
+                        
+                        if (!ivContainer) {
+                            console.error('❌ aesDecIvContainer não encontrado!');
+                            return;
+                        }
+                        
+                        // Função para atualizar visibilidade
+                        function atualizarIV() {
+                            const selecionado = document.querySelector('input[name="aesDecMode"]:checked');
+                            if (selecionado) {
+                                ivContainer.style.display = selecionado.value === 'CBC' ? 'block' : 'none';
+                                console.log('🔄 IV Decifragem:', selecionado.value, '| Display:', ivContainer.style.display);
+                            }
+                        }
+                        
+                        // Adicionar listeners
+                        radios.forEach(function(radio) {
+                            radio.addEventListener('change', atualizarIV);
+                            radio.addEventListener('click', atualizarIV);
+                        });
+                        
+                        // Inicializar
+                        atualizarIV();
+                    }
+                    
+                    // Executar quando o DOM estiver pronto
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', configurarIVDecifragem);
+                    } else {
+                        configurarIVDecifragem();
+                    }
+                })();
+            </script>
 
             <button class="btn btn-primary" onclick="descriptografarAES()">
                 🔓 Decifrar
@@ -554,7 +563,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>🔐 Sistema de Criptografia - Envelope Digital</p>
+            <p>🔐 Trabalho de Segurança - Sistema de Criptografia</p>
             <p class="footer-info">Compatível com OpenSSL e CyberChef</p>
         </footer>
     </div>
@@ -646,8 +655,7 @@
                     'rsa-keys.js',
                     'aes-crypto.js',
                     'rsa-signature.js',
-                    'main.js',
-                    'script.js'
+                    'main.js'
                 ];
                 
                 modules.forEach(function(module) {

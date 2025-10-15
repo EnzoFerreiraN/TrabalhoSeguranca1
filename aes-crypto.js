@@ -34,69 +34,7 @@ function alternarAbaAesDec(tab) {
     document.getElementById('contentAesDec' + tab).classList.add('active');
 }
 
-/**
- * Deriva uma chave AES a partir de uma senha UTF-8
- * Usa SHA-256 para garantir tamanho correto e evitar problemas com caracteres especiais
- */
-function derivarChaveDesenha(senha, tamanhoBytes) {
-    const md = forge.md.sha256.create();
-    md.update(senha, 'utf8');
-    let hash = md.digest().bytes();
-    
-    // Ajustar tamanho se necessário
-    if (hash.length > tamanhoBytes) {
-        return hash.substring(0, tamanhoBytes);
-    } else if (hash.length < tamanhoBytes) {
-        // Expandir hash se necessário (para chaves 192/256 bits)
-        while (hash.length < tamanhoBytes) {
-            const md2 = forge.md.sha256.create();
-            md2.update(hash, 'raw');
-            hash += md2.digest().bytes();
-        }
-        return hash.substring(0, tamanhoBytes);
-    }
-    return hash;
-}
-
-/**
- * Converte chave/IV do formato do usuário para bytes
- * @param {string} input - Chave ou IV fornecida
- * @param {string} formato - 'UTF8' ou 'HEX'
- * @param {number} tamanhoBytes - Tamanho esperado em bytes
- * @param {string} tipo - 'chave' ou 'IV' (para mensagens de erro)
- * @returns {string} - Binary string (bytes)
- */
-function processarChaveOuIV(input, formato, tamanhoBytes, tipo) {
-    if (!input || !input.trim()) {
-        throw new Error(`${tipo} não pode estar vazio.`);
-    }
-    
-    input = input.trim();
-    let bytes;
-    
-    if (formato === 'UTF8') {
-        // Deriva da senha usando SHA-256 (evita problemas com UTF-8)
-        bytes = derivarChaveDesenha(input, tamanhoBytes);
-    } else { // HEX
-        // Remove espaços e valida formato
-        input = input.replace(/\s+/g, '');
-        
-        if (!/^[0-9A-Fa-f]+$/.test(input)) {
-            throw new Error(`${tipo} em formato HEX inválido. Use apenas 0-9 e A-F.`);
-        }
-        
-        // Converte HEX para bytes
-        bytes = forge.util.hexToBytes(input);
-        
-        if (bytes.length !== tamanhoBytes) {
-            const bitsEsperados = tamanhoBytes * 8;
-            const bitsRecebidos = bytes.length * 8;
-            throw new Error(`${tipo} HEX deve ter ${tamanhoBytes} bytes (${bitsEsperados} bits), mas tem ${bytes.length} bytes (${bitsRecebidos} bits).`);
-        }
-    }
-    
-    return bytes;
-}
+// Funções de processamento de chave removidas - agora usa apenas geração aleatória
 
 /**
  * Criptografa dados usando AES
@@ -125,48 +63,28 @@ async function criptografarAES() {
         // 2. Obter configurações
         const keySize = parseInt(document.querySelector('input[name="aesKeySize"]:checked').value);
         const mode = document.querySelector('input[name="aesMode"]:checked').value;
-        const keyFormat = document.querySelector('input[name="aesKeyFormat"]:checked').value;
         const outputFormat = document.querySelector('input[name="aesOutputFormat"]:checked').value;
         
-        // 3. Processar a chave AES
-        let aesKey;
-        const keyInput = document.getElementById('aesKeyInputCifrar').value.trim();
-        const keyBytes = keySize / 8;
+        console.log(`📋 Configurações AES: ${keySize} bits, Modo ${mode}, Saída ${outputFormat}`);
         
-        if (!keyInput) {
-            // Gerar chave aleatória se vazia
-            aesKey = forge.random.getBytesSync(keyBytes);
-            console.log(`Chave AES de ${keySize} bits gerada aleatoriamente.`);
-        } else {
-            // Usar chave fornecida (processar com função auxiliar)
-            try {
-                aesKey = processarChaveOuIV(keyInput, keyFormat, keyBytes, 'Chave');
-                console.log(`Chave AES fornecida (${keyFormat}) processada.`);
-            } catch (error) {
-                mostrarErro(error.message);
-                return;
-            }
+        // 3. Gerar chave AES aleatória (SEMPRE)
+        const keyBytes = keySize / 8;
+        const aesKey = forge.random.getBytesSync(keyBytes);
+        console.log(`✅ Chave AES de ${keySize} bits gerada aleatoriamente (${aesKey.length} bytes = ${aesKey.length * 8} bits).`);
+        
+        // VALIDAÇÃO: Garantir que a chave tem o tamanho correto
+        if (aesKey.length !== keyBytes) {
+            console.error(`❌ ERRO CRÍTICO: Chave gerada tem ${aesKey.length} bytes, mas deveria ter ${keyBytes} bytes!`);
+            mostrarErro(`Erro ao gerar chave: tamanho incorreto (${aesKey.length} bytes em vez de ${keyBytes} bytes).`);
+            return;
         }
         
-        // 4. Processar o IV (se modo CBC)
+        // 4. Gerar IV para modo CBC
         let iv = null;
         if (mode === 'CBC') {
-            const ivInput = document.getElementById('aesIvInputCifrar').value.trim();
-            
-            if (!ivInput) {
-                // Gerar IV aleatório (sempre 16 bytes = 128 bits para AES)
-                iv = forge.random.getBytesSync(16);
-                console.log('IV de 128 bits gerado aleatoriamente para CBC.');
-            } else {
-                // Usar IV fornecido (processar com função auxiliar)
-                try {
-                    iv = processarChaveOuIV(ivInput, keyFormat, 16, 'IV');
-                    console.log(`IV fornecido (${keyFormat}) processado.`);
-                } catch (error) {
-                    mostrarErro(error.message);
-                    return;
-                }
-            }
+            // Gerar IV aleatório (sempre 16 bytes = 128 bits para AES)
+            iv = forge.random.getBytesSync(16);
+            console.log('✅ IV de 128 bits gerado aleatoriamente para CBC.');
         }
         
         // 5. Configurar e executar a cifra AES
@@ -190,18 +108,37 @@ async function criptografarAES() {
         // 6. Formatar resultados para exibição (sempre Binary String → Base64/HEX)
         let formattedKey, formattedIv, formattedCiphertext;
         
+        console.log(`📤 Formatando resultados para saída (${outputFormat})...`);
+        console.log(`   Chave original: ${aesKey.length} bytes (${aesKey.length * 8} bits)`);
+        console.log(`   Texto cifrado: ${ciphertext.length} bytes`);
+        if (mode === 'CBC') {
+            console.log(`   IV: ${iv.length} bytes (${iv.length * 8} bits)`);
+        }
+        
         if (outputFormat === 'BASE64') {
             // Binary String → Base64 (melhor para copiar/colar)
             formattedKey = forge.util.encode64(aesKey);
             formattedCiphertext = forge.util.encode64(ciphertext);
             formattedIv = mode === 'CBC' ? forge.util.encode64(iv) : null;
-            console.log('Resultados formatados em Base64.');
+            
+            console.log(`✅ Resultados formatados em Base64:`);
+            console.log(`   Chave Base64: ${formattedKey.length} caracteres (${aesKey.length} bytes originais = ${aesKey.length * 8} bits)`);
+            console.log(`   Texto cifrado Base64: ${formattedCiphertext.length} caracteres`);
+            if (mode === 'CBC') {
+                console.log(`   IV Base64: ${formattedIv.length} caracteres (${iv.length} bytes originais = ${iv.length * 8} bits)`);
+            }
         } else { // HEX
             // Binary String → Hexadecimal
             formattedKey = forge.util.bytesToHex(aesKey).toUpperCase();
             formattedCiphertext = forge.util.bytesToHex(ciphertext).toUpperCase();
             formattedIv = mode === 'CBC' ? forge.util.bytesToHex(iv).toUpperCase() : null;
-            console.log('Resultados formatados em HEX.');
+            
+            console.log(`✅ Resultados formatados em HEX:`);
+            console.log(`   Chave HEX: ${formattedKey.length} caracteres (${aesKey.length} bytes originais = ${aesKey.length * 8} bits)`);
+            console.log(`   Texto cifrado HEX: ${formattedCiphertext.length} caracteres`);
+            if (mode === 'CBC') {
+                console.log(`   IV HEX: ${formattedIv.length} caracteres (${iv.length} bytes originais = ${iv.length * 8} bits)`);
+            }
         }
         
         // 7. Armazenar e exibir resultados
@@ -254,28 +191,45 @@ async function descriptografarAES() {
         // 2. Obter configurações
         const keySize = parseInt(document.querySelector('input[name="aesDecKeySize"]:checked').value);
         const mode = document.querySelector('input[name="aesDecMode"]:checked').value;
-        const keyFormat = document.querySelector('input[name="aesDecKeyFormat"]:checked').value;
         const inputFormat = document.querySelector('input[name="aesDecInputFormat"]:checked').value;
         
-        // 3. Obter e processar a chave
-        const keyInput = document.getElementById('aesKeyInput').value.trim();
-        const keyBytes = keySize / 8;
+        console.log(`📋 Configurações decifragem: ${keySize} bits, Modo ${mode}, Entrada ${inputFormat}`);
         
+        // 3. Obter a chave AES
+        const keyInput = document.getElementById('aesKeyInput').value.trim();
         if (!keyInput) {
             mostrarErro('Por favor, insira a chave AES.');
             return;
         }
         
+        // Converter chave do formato de entrada
+        const keyBytes = keySize / 8;
         let aesKey;
-        try {
-            aesKey = processarChaveOuIV(keyInput, keyFormat, keyBytes, 'Chave');
-            console.log(`Chave AES processada (${keyFormat}).`);
-        } catch (error) {
-            mostrarErro(error.message);
+        
+        if (inputFormat === 'BASE64') {
+            try {
+                aesKey = forge.util.decode64(keyInput);
+                console.log('✅ Chave AES decodificada de Base64.');
+            } catch (error) {
+                mostrarErro('A chave AES não está em formato Base64 válido.');
+                return;
+            }
+        } else { // HEX
+            if (!/^[0-9A-Fa-f\s]+$/.test(keyInput)) {
+                mostrarErro('A chave AES não está em formato hexadecimal válido. Use apenas 0-9 e A-F.');
+                return;
+            }
+            aesKey = forge.util.hexToBytes(keyInput.replace(/\s+/g, ''));
+            console.log('✅ Chave AES convertida de HEX.');
+        }
+        
+        // Validar tamanho da chave
+        if (aesKey.length !== keyBytes) {
+            mostrarErro(`A chave AES tem ${aesKey.length * 8} bits, mas o tamanho selecionado é ${keySize} bits.\n\nVerifique se copiou a chave correta.`);
             return;
         }
         
-        // 4. Obter e processar IV (se modo CBC)
+        // 4. Obter IV (se modo CBC)
         let iv = null;
         if (mode === 'CBC') {
             const ivInput = document.getElementById('aesIvInput').value.trim();
@@ -285,11 +239,27 @@ async function descriptografarAES() {
                 return;
             }
             
-            try {
-                iv = processarChaveOuIV(ivInput, keyFormat, 16, 'IV');
-                console.log(`IV processado (${keyFormat}).`);
-            } catch (error) {
-                mostrarErro(error.message);
+            // Converter IV do formato de entrada
+            if (inputFormat === 'BASE64') {
+                try {
+                    iv = forge.util.decode64(ivInput);
+                    console.log('✅ IV decodificado de Base64.');
+                } catch (error) {
+                    mostrarErro('O IV não está em formato Base64 válido.');
+                    return;
+                }
+            } else { // HEX
+                if (!/^[0-9A-Fa-f\s]+$/.test(ivInput)) {
+                    mostrarErro('O IV não está em formato hexadecimal válido. Use apenas 0-9 e A-F.');
+                    return;
+                }
+                iv = forge.util.hexToBytes(ivInput.replace(/\s+/g, ''));
+                console.log('✅ IV convertido de HEX.');
+            }
+            
+            // Validar tamanho do IV (deve ser sempre 16 bytes)
+            if (iv.length !== 16) {
+                mostrarErro(`O IV deve ter 16 bytes (128 bits), mas tem ${iv.length} bytes.`);
                 return;
             }
         }
